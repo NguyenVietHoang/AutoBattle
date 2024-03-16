@@ -11,9 +11,13 @@ namespace Game
             {
                 SceneManager.LoadScene("DemoMixer");
             }
-            else
+            else if (idx == 0)
             {
                 SceneManager.LoadScene("FlappyAxie");
+            }
+            else
+            {
+                SceneManager.LoadScene("MainScene");
             }
         }
     }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 namespace AutoBattle
 {
     public class MainGameManager : MonoBehaviour
@@ -225,6 +226,11 @@ namespace AutoBattle
             //    //StartCoroutine(Move_Phase());
             //    t = 0;
             //}
+        }
+
+        public void ToLoadingScene()
+        {
+            SceneManager.LoadScene("Loading");
         }
     }
 

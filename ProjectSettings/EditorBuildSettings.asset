@@ -14,4 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/AxieInfinity/AxieMixerUnity/Demo/2. Flappy Axie/FlappyAxie.unity
     guid: 3e62be8942ba54570a24aa9cc83af773
+  - enabled: 1
+    path: Assets/_Game/Scenes/MainScene.unity
+    guid: 2518bddd61af84e4c83be1d1d741baaf
   m_configObjects: {}
