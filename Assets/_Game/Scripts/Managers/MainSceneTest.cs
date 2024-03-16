@@ -16,7 +16,7 @@ public class MainSceneTest : MonoBehaviour
     {
         playerControl.Init(playerModel);
         enemyControl.Init(enemyModel);
-        playerControl.Flip();
+        playerControl.Flip(enemyControl.transform.position);
         playerControl.EnableHightlight(true);
     }
 

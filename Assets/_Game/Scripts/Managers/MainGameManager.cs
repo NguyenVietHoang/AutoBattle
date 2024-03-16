@@ -20,6 +20,8 @@ namespace AutoBattle
         [SerializeField]
         private BoardControl board;
         [SerializeField]
+        private ForceBar_View forceBar;
+        [SerializeField]
         private float phaseTime = 1.0f;
 
         GAME_PHASE CurrentPhase;
@@ -50,22 +52,26 @@ namespace AutoBattle
 
             AllyForce = allyCharacterList.Count;
             EnemyForce = enemyCharacterList.Count;
+            forceBar.SetBar(AllyForce, EnemyForce);
 
             for (int i = 0; i < allyCharacterList.Count; i++)
             {
-                allyCharacterList[i].Init(playerModel, CHARACTER_SIDE.ALLY);
+                allyCharacterList[i].Init(playerModel, CHARACTER_SIDE.ALLY, i);
                 board.SetCharacter(allyCharacterList[i].transform.localPosition, allyCharacterList[i], true);
             }
             for (int i = 0; i < enemyCharacterList.Count; i++)
             {
-                enemyCharacterList[i].Init(enemyModel, CHARACTER_SIDE.ENEMY);
+                enemyCharacterList[i].Init(enemyModel, CHARACTER_SIDE.ENEMY, i);
                 board.SetCharacter(enemyCharacterList[i].transform.localPosition, enemyCharacterList[i], true);
             }
         }
-
+        
         IEnumerator Move_Phase()
         {
             Debug.Log("--------MOVE PHASE----------");
+            CurrentPhase = GAME_PHASE.MOVE;
+            forceBar.SetMsg("MOVE");
+
             for (int i = 0; i < allyCharacterList.Count; i++)
             {
                 if (allyCharacterList[i] != null)
@@ -77,7 +83,7 @@ namespace AutoBattle
                         var pathToEnemy = board.DetectClosestEnemy(allyCharacterList[i]);
                         if (pathToEnemy != null && pathToEnemy.path.Count > 0)
                         {
-                            Debug.Log("Calculated Path: " + pathToEnemy.ToString());
+                            //Debug.Log("Calculated Path: " + pathToEnemy.ToString());
                             board.MoveCharacter(pathToEnemy.path, allyCharacterList[i]);
                         }
                     }
@@ -91,6 +97,9 @@ namespace AutoBattle
         IEnumerator Attack_Phase()
         {
             Debug.Log("--------ATTACK PHASE----------");
+            CurrentPhase = GAME_PHASE.ATTACK;
+            forceBar.SetMsg("ATTACK");
+
             for (int i = 0; i < allyCharacterList.Count; i++)
             {
                 if (allyCharacterList[i] != null)
@@ -103,10 +112,15 @@ namespace AutoBattle
                     {
                         int damage = GetDamage(alliesNb + 1, enemiesNb);
                         allyCharacterList[i].SetAnimation(ANIM_STATE.ATTACK);
+                        allyCharacterList[i].Flip(enemies[0].transform.position);
                         enemies[0].TakeDamage(damage);
+                        Debug.Log(allyCharacterList[i].name + " - " + allyCharacterList[i].CurrentSide.ToString() 
+                            + " attack " + enemies[0].name + " - " + enemies[0].CurrentSide.ToString() + ": " + damage + " damage.");
+
                         if (enemies[0].currentData.currentHP <= 0)
                         {
-                            deathAllies.Add(enemies[0]);
+                            deathEnemies.Add(enemies[0]);
+                            Debug.Log("Death: " + enemies[0].name);
                         }
                     }
                     yield return null;
@@ -125,17 +139,22 @@ namespace AutoBattle
                     {
                         int damage = GetDamage(alliesNb + 1, enemiesNb);
                         enemyCharacterList[i].SetAnimation(ANIM_STATE.ATTACK);
+                        enemyCharacterList[i].Flip(enemies[0].transform.position);
                         enemies[0].TakeDamage(damage);
+
+                        Debug.Log(enemyCharacterList[i].name + " - " + enemyCharacterList[i].CurrentSide.ToString()
+                            + " attack " + enemies[0].name + " - " + enemies[0].CurrentSide.ToString() + ": " + damage + " damage.");
                         if (enemies[0].currentData.currentHP <= 0)
                         {
-                            deathEnemies.Add(enemies[0]);
+                            deathAllies.Add(enemies[0]);
+                            Debug.Log("Death: " + enemies[0].name);
                         }
                     }
                     yield return null;
                 }                
             }
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.3f);
             StartCoroutine(Death_Phase());
         }
 
@@ -162,19 +181,23 @@ namespace AutoBattle
         IEnumerator Death_Phase()
         {
             Debug.Log("--------DEATH PHASE----------");
-            if(deathAllies != null && deathAllies.Count > 0)
+            CurrentPhase = GAME_PHASE.DEATH;
+            forceBar.SetMsg("DEATH");
+
+            if (deathAllies != null && deathAllies.Count > 0)
             {
                 for(int i = 0; i < deathAllies.Count; i++)
                 {
-                    CharacterControl death = deathAllies[i];
+                    CharacterControl death = deathAllies[i];                    
                     if (death != null)
                     {
-                        death.CurrentTile.SetCharacter(null);
-                        allyCharacterList.Remove(death);
+                        //Debug.Log("Ally Death id: " + death.CharacterId + " | Side: " + death.CurrentSide.ToString());
+                        allyCharacterList[death.CharacterId] = null;
+                        death.CurrentTile.SetCharacter(null);                        
                         Destroy(death.gameObject);
                         AllyForce--;
-                        yield return null;
-                    }                        
+                    }
+                    yield return null;
                 }
             }
 
@@ -185,29 +208,37 @@ namespace AutoBattle
                     CharacterControl death = deathEnemies[i];
                     if(death != null)
                     {
-                        death.CurrentTile.SetCharacter(null);
-                        enemyCharacterList.Remove(death);
+                        //Debug.Log("Enemy Death id: " + death.CharacterId + " | Side: " + death.CurrentSide.ToString());
+                        enemyCharacterList[death.CharacterId] = null;
+                        death.CurrentTile.SetCharacter(null);                        
                         Destroy(death.gameObject);
-                        EnemyForce--;
-                        yield return null;
+                        EnemyForce--;                        
                     }
+                    yield return null;
                 }
             }
 
-            Debug.Log("[Death Phase] Ally: " + AllyForce + " | Enemy: " + EnemyForce);
-            if(AllyForce <= 0)
+            //Debug.Log("[Death Phase] Ally: " + AllyForce + " | Enemy: " + EnemyForce);
+            forceBar.SetBar(AllyForce, EnemyForce);
+
+            if (AllyForce <= 0)
             {
                 Debug.Log("You Lose");
+                forceBar.SetMsg("You Lose");
+                CurrentPhase = GAME_PHASE.END;
             }
             else if(EnemyForce <= 0)
             {
                 Debug.Log("You Win");
+                forceBar.SetMsg("You Win");
+                CurrentPhase = GAME_PHASE.END;
             }
             else
             {
                 deathAllies = new List<CharacterControl>();
                 deathEnemies = new List<CharacterControl>();
-                yield return new WaitForSeconds(0.4f);
+                yield return null;
+                CurrentPhase = GAME_PHASE.START;
                 StartCoroutine(Move_Phase());
             }
             
@@ -217,15 +248,15 @@ namespace AutoBattle
         // Update is called once per frame
         void Update()
         {
-            //if(t < phaseTime)
-            //{
-            //    t += Time.deltaTime;
-            //}
-            //else
-            //{
-            //    //StartCoroutine(Move_Phase());
-            //    t = 0;
-            //}
+            if (t >= phaseTime && CurrentPhase == GAME_PHASE.START)
+            {
+                StartCoroutine(Move_Phase());
+                t = 0;
+            }
+            else
+            {
+                t += Time.deltaTime;
+            }
         }
 
         public void ToLoadingScene()

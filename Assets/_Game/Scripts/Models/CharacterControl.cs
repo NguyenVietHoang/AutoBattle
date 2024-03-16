@@ -38,7 +38,8 @@ namespace AutoBattle
         public CharacterModel CharacterModel { get; private set; }
         public CHARACTER_SIDE CurrentSide { get; private set; }
         public TileModel CurrentTile { get; private set; }
-        public void Init(CharacterModel model, CHARACTER_SIDE characterSide= CHARACTER_SIDE.ALLY)
+        public int CharacterId { get; private set; }
+        public void Init(CharacterModel model, CHARACTER_SIDE characterSide= CHARACTER_SIDE.ALLY, int id = 0)
         {
             Mixer.Init();
 
@@ -51,6 +52,7 @@ namespace AutoBattle
             CurrentSide = characterSide;
             targetList = new Queue<Vector2>();
 
+            CharacterId = id;
         }
 
        
@@ -134,10 +136,9 @@ namespace AutoBattle
             charView.SetHightlight(isHighlight);
         }
 
-        int dir = 1;
-        public void Flip()
+        public void Flip(Vector2 targetPos)
         {
-            dir = dir * -1;
+            float dir = (targetPos.x > transform.position.x) ? -1 : 1;
             skeletonRenderer.skeleton.ScaleX = dir;
         }
 
@@ -161,7 +162,7 @@ namespace AutoBattle
                     debug += path[i].ToString() + "->";
                     targetList.Enqueue(path[i]);
                 }
-                Debug.Log(debug);
+                //Debug.Log(debug);
                 curDes = targetList.Dequeue();
             }
         }
@@ -193,6 +194,9 @@ namespace AutoBattle
             if(Vector2.Distance(curDes, transform.position) > 0.05f)
             {
                 Vector2 dir = Vector3.Normalize(curDes - (Vector2)transform.position) * moveSpeed;
+               
+                Flip(curDes);
+                
                 transform.Translate(dir);
                 SetAnimation(ANIM_STATE.MOVE);
                 //transform.position = Vector2.Lerp(curDes, transform.position, moveSpeed * Time.deltaTime);
