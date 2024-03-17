@@ -23,7 +23,7 @@ public class ForceBar_View : MonoBehaviour
         }
         else
         {
-            forceBar.value = Mathf.Clamp01((float)ally/enemy);
+            forceBar.value = Mathf.Clamp01((float)ally/(enemy + ally));
         }
     }
 

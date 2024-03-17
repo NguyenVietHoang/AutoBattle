@@ -110,7 +110,7 @@ namespace AutoBattle
                     int alliesNb = allies.Count;
                     if (enemies.Count > 0)
                     {
-                        int damage = GetDamage(alliesNb + 1, enemiesNb);
+                        int damage = GetDamage(alliesNb + 1, enemiesNb) + allyCharacterList[i].currentData.ATK;
                         allyCharacterList[i].SetAnimation(ANIM_STATE.ATTACK);
                         allyCharacterList[i].Flip(enemies[0].transform.position);
                         enemies[0].TakeDamage(damage);
@@ -137,7 +137,7 @@ namespace AutoBattle
                     int alliesNb = allies.Count;
                     if (enemies.Count > 0)
                     {
-                        int damage = GetDamage(alliesNb + 1, enemiesNb);
+                        int damage = GetDamage(alliesNb + 1, enemiesNb) + enemyCharacterList[i].currentData.ATK;
                         enemyCharacterList[i].SetAnimation(ANIM_STATE.ATTACK);
                         enemyCharacterList[i].Flip(enemies[0].transform.position);
                         enemies[0].TakeDamage(damage);
